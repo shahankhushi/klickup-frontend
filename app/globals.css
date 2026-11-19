@@ -1,0 +1,220 @@
+@import "tailwindcss";
+@config "../tailwind.config.ts";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  color-scheme: light;
+  --background: #f4f5f8;
+  --foreground: #12141a;
+  --card: #ffffff;
+  --card-foreground: #12141a;
+  --popover: #ffffff;
+  --popover-foreground: #12141a;
+  --muted: #eef0f4;
+  --muted-foreground: #5c6575;
+  --border: #e3e6ee;
+  --input: #ffffff;
+  --primary: #6d28d9;
+  --primary-hover: #5b21b6;
+  --primary-foreground: #ffffff;
+  --danger: #dc2626;
+  --danger-foreground: #ffffff;
+  --success: #059669;
+  --warning: #b45309;
+  --info: #1d4ed8;
+  --ring: #7c3aed;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1f2430;
+  --sidebar-muted: #5c6575;
+  --shadow-card: 0 1px 2px rgb(18 20 26 / 0.04), 0 8px 24px rgb(18 20 26 / 0.06);
+  --shadow-popover: 0 12px 40px rgb(18 20 26 / 0.14);
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #0e1016;
+  --foreground: #eceff5;
+  --card: #171a22;
+  --card-foreground: #eceff5;
+  --popover: #1c202b;
+  --popover-foreground: #eceff5;
+  --muted: #222633;
+  --muted-foreground: #a3adbd;
+  --border: #2c3242;
+  --input: #12151c;
+  --primary: #8b5cf6;
+  --primary-hover: #a78bfa;
+  --primary-foreground: #ffffff;
+  --danger: #f87171;
+  --danger-foreground: #1a0b0b;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --info: #60a5fa;
+  --ring: #a78bfa;
+  --sidebar: #12141c;
+  --sidebar-foreground: #eceff5;
+  --sidebar-muted: #a3adbd;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35), 0 12px 32px rgb(0 0 0 / 0.28);
+  --shadow-popover: 0 16px 48px rgb(0 0 0 / 0.45);
+}
+
+* {
+  border-color: var(--border);
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--primary) 28%, transparent);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--muted-foreground) 35%, transparent);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.doc-prosemirror { min-height: 560px; outline: none; color: var(--foreground); font-size: .975rem; line-height: 1.8; }
+.doc-prosemirror > * + * { margin-top: 1rem; }
+.doc-prosemirror h1, .doc-prosemirror h2, .doc-prosemirror h3 { font-weight: 750; line-height: 1.25; }
+.doc-prosemirror h1 { margin-top: 2.25rem; font-size: 1.85rem; }
+.doc-prosemirror h2 { margin-top: 1.9rem; font-size: 1.45rem; }
+.doc-prosemirror h3 { margin-top: 1.5rem; font-size: 1.15rem; }
+.doc-prosemirror p.is-editor-empty:first-child::before { float: left; height: 0; color: color-mix(in oklab, var(--muted-foreground) 70%, transparent); content: attr(data-placeholder); pointer-events: none; }
+.doc-prosemirror ul, .doc-prosemirror ol { padding-left: 1.55rem; }
+.doc-prosemirror ul { list-style: disc; }
+.doc-prosemirror ol { list-style: decimal; }
+.doc-prosemirror li + li { margin-top: .25rem; }
+.doc-prosemirror blockquote { border-left: 3px solid var(--primary); padding-left: 1rem; color: var(--muted-foreground); }
+.doc-prosemirror pre { overflow-x: auto; border-radius: .6rem; background: #151821; color: #e6edf7; padding: 1rem; line-height: 1.55; }
+.doc-prosemirror code { border-radius: .25rem; background: var(--muted); padding: .12rem .28rem; font-size: .86em; }
+.doc-prosemirror pre code { background: transparent; padding: 0; }
+.doc-prosemirror hr { margin: 2rem 0; border: 0; border-top: 1px solid var(--border); }
+.doc-prosemirror a { color: var(--primary); text-decoration: underline; }
+
+/* ======================================================== */
+/* Tiptap Table Styling - Overrides Tailwind v4 Reset & Inline Styles */
+/* ======================================================== */
+.doc-prosemirror .tableWrapper,
+.ProseMirror .tableWrapper,
+.tableWrapper {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  margin: 1.5rem 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.doc-prosemirror table,
+.ProseMirror table,
+.tableWrapper table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  table-layout: fixed !important;
+  margin: 0 !important;
+  border: 2px solid #1f2430 !important;
+  background: var(--card) !important;
+}
+
+.dark .doc-prosemirror table,
+.dark .ProseMirror table,
+.dark .tableWrapper table {
+  border-color: #eceff5 !important;
+}
+
+.doc-prosemirror table th,
+.doc-prosemirror table td,
+.ProseMirror table th,
+.ProseMirror table td,
+.tableWrapper table th,
+.tableWrapper table td {
+  position: relative !important;
+  min-height: 44px !important;
+  padding: 10px 12px !important;
+  border: 2px solid #1f2430 !important;
+  vertical-align: top !important;
+  box-sizing: border-box !important;
+  font-size: 0.9rem !important;
+  line-height: 1.5 !important;
+  width: 25% !important;
+}
+
+.dark .doc-prosemirror table th,
+.dark .doc-prosemirror table td,
+.dark .ProseMirror table th,
+.dark .ProseMirror table td {
+  border-color: #eceff5 !important;
+}
+
+.doc-prosemirror table th,
+.ProseMirror table th,
+.tableWrapper table th {
+  background-color: var(--muted) !important;
+  font-weight: 650 !important;
+  color: var(--foreground) !important;
+}
+
+.doc-prosemirror table td > p,
+.ProseMirror table td > p,
+.doc-prosemirror table th > p,
+.ProseMirror table th > p {
+  margin: 0 !important;
+  min-height: 1.4em !important;
+}
+
+.doc-prosemirror .selectedCell,
+.ProseMirror .selectedCell {
+  background-color: color-mix(in oklab, var(--primary) 12%, transparent) !important;
+}
+
+.doc-prosemirror .column-resize-handle {
+  display: none !important;
+}
+
+.doc-prosemirror img { display: block; max-width: 100%; height: auto; border-radius: .45rem; }
+.doc-prosemirror ul[data-type="taskList"] { list-style: none; padding-left: 0; }
+.doc-prosemirror ul[data-type="taskList"] li { display: flex; gap: .55rem; align-items: flex-start; }
+.doc-prosemirror ul[data-type="taskList"] li > label {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  margin-top: .35rem;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.doc-prosemirror ul[data-type="taskList"] li > label input[type="checkbox"] {
+  appearance: auto;
+  -webkit-appearance: checkbox;
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--primary);
+  pointer-events: auto;
+}
+.doc-prosemirror ul[data-type="taskList"] li > div { flex: 1; }
+.doc-prosemirror ul[data-type="taskList"] li[data-checked="true"] > div { color: var(--muted-foreground); text-decoration: line-through; }
+.doc-prosemirror [style*="text-align: center"] { text-align: center; }
+.doc-prosemirror [style*="text-align: right"] { text-align: right; }
+.doc-prosemirror [style*="text-align: left"] { text-align: left; }
+.doc-small-button { border: 1px solid var(--border); border-radius: .35rem; background: var(--card); padding: .2rem .42rem; color: var(--foreground); }
+.doc-small-button:hover { background: var(--muted); }

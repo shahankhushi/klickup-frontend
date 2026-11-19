@@ -1,0 +1,161 @@
+import { CanvasObject } from "./types";
+
+export const initialWhiteboardObjects: CanvasObject[] = [
+  // 1. Frame box
+  {
+    id: "obj_frame_1",
+    type: "frame",
+    x: 450,
+    y: 160,
+    width: 220,
+    height: 105,
+    title: "Frame",
+    stroke: "#94a3b8",
+    fill: "#ffffff",
+    zIndex: 1,
+  },
+
+  // 2. Freehand drawn loop/circle
+  {
+    id: "obj_draw_1",
+    type: "drawing",
+    x: 540,
+    y: 350,
+    width: 85,
+    height: 80,
+    points: [
+      { x: 580, y: 350 },
+      { x: 615, y: 360 },
+      { x: 625, y: 390 },
+      { x: 615, y: 420 },
+      { x: 575, y: 430 },
+      { x: 545, y: 410 },
+      { x: 545, y: 375 },
+      { x: 575, y: 352 },
+    ],
+    color: "#1e293b",
+    strokeWidth: 3.5,
+    zIndex: 2,
+  },
+
+  // 3. Pastel Yellow Sticky Note with "1\n2\n3\n4"
+  {
+    id: "obj_sticky_1",
+    type: "sticky",
+    x: 770,
+    y: 240,
+    width: 175,
+    height: 175,
+    color: "#fde047",
+    text: "1\n2\n3\n4",
+    fontSize: 18,
+    fontWeight: "bold",
+    textAlign: "center",
+    zIndex: 3,
+  },
+
+  // 4. Embedded Screenshot Image
+  {
+    id: "obj_img_1",
+    type: "image",
+    x: 1030,
+    y: 290,
+    width: 330,
+    height: 210,
+    src: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80",
+    caption: "Project Board Reference",
+    zIndex: 4,
+  },
+
+  // 5. Elbow connector from Sticky Note to Image
+  {
+    id: "obj_conn_1",
+    type: "connector",
+    x: 945,
+    y: 320,
+    width: 85,
+    height: 50,
+    fromId: "obj_sticky_1",
+    fromAnchor: "right",
+    toId: "obj_img_1",
+    toAnchor: "left",
+    connectorType: "elbow",
+    strokeStyle: "solid",
+    stroke: "#0f172a",
+    strokeWidth: 2,
+    endArrow: "arrow",
+    zIndex: 5,
+  },
+
+  // 6. Text annotation: "ye krna he abhi"
+  {
+    id: "obj_text_1",
+    type: "text",
+    x: 620,
+    y: 525,
+    width: 170,
+    height: 32,
+    text: "ye krna he abhi",
+    color: "#0f172a",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
+    zIndex: 6,
+  },
+
+  // 7. ClickUp Task Card: "iPhone Give away campaign"
+  {
+    id: "obj_task_1",
+    type: "task",
+    x: 615,
+    y: 650,
+    width: 220,
+    height: 90,
+    taskId: "t_iphone_campaign",
+    taskTitle: "iPhone Give away campaign",
+    projectName: "Kisumu Daily Task",
+    spaceName: "Khushi Motors",
+    status: "done",
+    priority: "normal",
+    assigneeName: "Abubakar",
+    assigneeInitials: "AB",
+    assigneeColor: "#0d9488",
+    zIndex: 7,
+  },
+
+  // 8. Elbow connector from Sticky Note down towards Task Card
+  {
+    id: "obj_conn_2",
+    type: "connector",
+    x: 700,
+    y: 415,
+    width: 160,
+    height: 235,
+    fromId: "obj_sticky_1",
+    fromAnchor: "bottom",
+    toId: "obj_task_1",
+    toAnchor: "top",
+    connectorType: "elbow",
+    strokeStyle: "solid",
+    stroke: "#0f172a",
+    strokeWidth: 2,
+    endArrow: "arrow",
+    zIndex: 8,
+  },
+
+  // 9. Selected Rectangle with contextual toolbar
+  {
+    id: "obj_rect_1",
+    type: "shape",
+    shapeType: "rectangle",
+    x: 180,
+    y: 660,
+    width: 165,
+    height: 135,
+    fill: "#ffffff",
+    stroke: "#3b82f6",
+    strokeWidth: 2,
+    strokeStyle: "dashed",
+    zIndex: 9,
+  },
+];
