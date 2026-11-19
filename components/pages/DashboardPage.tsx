@@ -52,11 +52,23 @@ export function DashboardPage() {
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
   const [loading, setLoading] = useState(false);
 
-  // Fetch real analytics from backend port 5000
+  // Fetch real analytics from backend if available
   const fetchDashboardData = async () => {
+    const baseUrl =
+      process.env.NEXT_PUBLIC_API_URL ||
+      (typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+        ? "http://localhost:5000"
+        : "");
+
+    if (!baseUrl) {
+      setIsBackendConnected(false);
+      return;
+    }
+
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:5000/api/workspace/dashboard", {
+      const res = await fetch(`${baseUrl}/api/workspace/dashboard`, {
         cache: "no-store",
       });
       if (res.ok) {
@@ -193,7 +205,7 @@ export function DashboardPage() {
                 isBackendConnected ? "bg-emerald-500 animate-pulse" : "bg-emerald-500"
               }`}
             />
-            {isBackendConnected ? "Connected to Backend (Port 5000)" : "Live Backend Sync"}
+            {isBackendConnected ? "Connected to Backend (Port 5000)" : "Interactive Mode (Live State)"}
           </span>
           <button
             onClick={fetchDashboardData}

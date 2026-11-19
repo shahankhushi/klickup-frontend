@@ -16,7 +16,14 @@ import { WhiteboardListView } from "./WhiteboardListView";
 import { Task } from "@/lib/types";
 
 const LOCAL_STORAGE_LIST_KEY = "klickup_whiteboards_registry_v1";
-const API_URL = "http://localhost:5000/api/whiteboards";
+
+const getWhiteboardApiUrl = (): string => {
+  if (process.env.NEXT_PUBLIC_API_URL) return `${process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "")}/api/whiteboards`;
+  if (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
+    return "http://localhost:5000/api/whiteboards";
+  }
+  return "";
+};
 
 interface WhiteboardEntity {
   id: string;
@@ -68,20 +75,23 @@ export function WhiteboardPage() {
 
   // 1. Fetch whiteboards from backend API on mount
   const loadWhiteboards = useCallback(async () => {
-    try {
-      const res = await fetch(API_URL);
-      if (res.ok) {
-        const json = await res.json();
-        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-          setWhiteboards(json.data);
-          try {
-            localStorage.setItem(LOCAL_STORAGE_LIST_KEY, JSON.stringify(json.data));
-          } catch {}
-          return json.data;
+    const apiUrl = getWhiteboardApiUrl();
+    if (apiUrl) {
+      try {
+        const res = await fetch(apiUrl);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+            setWhiteboards(json.data);
+            try {
+              localStorage.setItem(LOCAL_STORAGE_LIST_KEY, JSON.stringify(json.data));
+            } catch {}
+            return json.data;
+          }
         }
+      } catch {
+        // Backend unavailable, fallback to localStorage
       }
-    } catch {
-      // Backend unavailable, fallback to localStorage
     }
 
     // LocalStorage fallback
@@ -113,21 +123,24 @@ export function WhiteboardPage() {
           if (Array.isArray(parsed)) setState(parsed);
         } catch {}
       } else {
-        // Initial seed to backend
-        try {
-          await fetch(API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              id: DEFAULT_BOARD.id,
-              name: DEFAULT_BOARD.name,
-              data: DEFAULT_BOARD.data,
-            }),
-          });
-          setWhiteboards([DEFAULT_BOARD]);
-          setCurrentBoardId(DEFAULT_BOARD.id);
-          setTitle(DEFAULT_BOARD.name);
-        } catch {}
+        const apiUrl = getWhiteboardApiUrl();
+        if (apiUrl) {
+          // Initial seed to backend if available
+          try {
+            await fetch(apiUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                id: DEFAULT_BOARD.id,
+                name: DEFAULT_BOARD.name,
+                data: DEFAULT_BOARD.data,
+              }),
+            });
+          } catch {}
+        }
+        setWhiteboards([DEFAULT_BOARD]);
+        setCurrentBoardId(DEFAULT_BOARD.id);
+        setTitle(DEFAULT_BOARD.name);
       }
     }
 
@@ -162,9 +175,15 @@ export function WhiteboardPage() {
         return updated;
       });
 
+      const apiUrl = getWhiteboardApiUrl();
+      if (!apiUrl) {
+        setSaveStatus("saved");
+        return;
+      }
+
       // Save to Backend API via PATCH (backend upserts this exact boardId)
       try {
-        const res = await fetch(`${API_URL}/${boardId}`, {
+        const res = await fetch(`${apiUrl}/${boardId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -264,33 +283,36 @@ export function WhiteboardPage() {
     setSelectedIds(starterObjects.length > 0 ? [starterObjects[0].id] : []);
     setPageView("canvas"); // Instantly transition to blank canvas!
 
-    // Persist to backend with newBoardId
-    try {
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: newBoardId,
-          name,
-          data: JSON.stringify(starterObjects),
-        }),
-      });
-      if (res.ok) {
-        const json = await res.json();
-        const realId = json.data?.id || newBoardId;
-        if (realId !== newBoardId) {
-          setCurrentBoardId(realId);
-          setWhiteboards((prev) => {
-            const updated = prev.map((b) => (b.id === newBoardId ? { ...b, id: realId } : b));
-            try {
-              localStorage.setItem(LOCAL_STORAGE_LIST_KEY, JSON.stringify(updated));
-            } catch {}
-            return updated;
-          });
+    // Persist to backend with newBoardId if configured
+    const apiUrl = getWhiteboardApiUrl();
+    if (apiUrl) {
+      try {
+        const res = await fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: newBoardId,
+            name,
+            data: JSON.stringify(starterObjects),
+          }),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const realId = json.data?.id || newBoardId;
+          if (realId !== newBoardId) {
+            setCurrentBoardId(realId);
+            setWhiteboards((prev) => {
+              const updated = prev.map((b) => (b.id === newBoardId ? { ...b, id: realId } : b));
+              try {
+                localStorage.setItem(LOCAL_STORAGE_LIST_KEY, JSON.stringify(updated));
+              } catch {}
+              return updated;
+            });
+          }
         }
+      } catch {
+        // offline save in state/localStorage
       }
-    } catch {
-      // offline save in state/localStorage
     }
   };
 
@@ -316,31 +338,34 @@ export function WhiteboardPage() {
       return updated;
     });
 
-    try {
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: newBoardId,
-          name: newName,
-          data: source.data,
-        }),
-      });
-      if (res.ok) {
-        const json = await res.json();
-        const realId = json.data?.id || newBoardId;
-        if (realId !== newBoardId) {
-          setWhiteboards((prev) => {
-            const updated = prev.map((b) => (b.id === newBoardId ? { ...b, id: realId } : b));
-            try {
-              localStorage.setItem(LOCAL_STORAGE_LIST_KEY, JSON.stringify(updated));
-            } catch {}
-            return updated;
-          });
+    const apiUrl = getWhiteboardApiUrl();
+    if (apiUrl) {
+      try {
+        const res = await fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: newBoardId,
+            name: newName,
+            data: source.data,
+          }),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const realId = json.data?.id || newBoardId;
+          if (realId !== newBoardId) {
+            setWhiteboards((prev) => {
+              const updated = prev.map((b) => (b.id === newBoardId ? { ...b, id: realId } : b));
+              try {
+                localStorage.setItem(LOCAL_STORAGE_LIST_KEY, JSON.stringify(updated));
+              } catch {}
+              return updated;
+            });
+          }
         }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
     }
   };
 
@@ -354,14 +379,17 @@ export function WhiteboardPage() {
       setTitle(newName);
     }
 
-    try {
-      await fetch(`${API_URL}/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newName }),
-      });
-    } catch {
-      // ignore
+    const apiUrl = getWhiteboardApiUrl();
+    if (apiUrl) {
+      try {
+        await fetch(`${apiUrl}/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: newName }),
+        });
+      } catch {
+        // ignore
+      }
     }
   };
 
@@ -378,10 +406,13 @@ export function WhiteboardPage() {
       handleSelectWhiteboard(nextBoard.id);
     }
 
-    try {
-      await fetch(`${API_URL}/${id}`, { method: "DELETE" });
-    } catch {
-      // ignore
+    const apiUrl = getWhiteboardApiUrl();
+    if (apiUrl) {
+      try {
+        await fetch(`${apiUrl}/${id}`, { method: "DELETE" });
+      } catch {
+        // ignore
+      }
     }
   };
 

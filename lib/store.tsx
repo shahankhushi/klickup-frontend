@@ -89,6 +89,14 @@ const AppDataContext = createContext<AppData | null>(null);
 
 const STORAGE_KEY = "klickup_workspace_state_v7";
 
+function getApiBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "");
+  if (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
+    return "http://localhost:5000";
+  }
+  return "";
+}
+
 function mergeRemoteTasks(local: Task[], remote: Task[]) {
   const remoteIds = new Set(remote.map((task) => task.id));
   const onlyLocal = local.filter((task) => !remoteIds.has(task.id));
@@ -166,6 +174,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     updatedBy?: string;
   }) {
     if (typeof window === "undefined") return;
+    const baseUrl = getApiBaseUrl();
+    if (!baseUrl) return; // In standalone demo mode, state is saved to localStorage without remote sync errors
     if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
     syncTimerRef.current = setTimeout(() => {
       try {
@@ -176,7 +186,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           feed: override?.feed ?? feedRef.current,
           updatedBy: override?.updatedBy || "Employee",
         };
-        fetch("http://localhost:5000/api/workspace/sync", {
+        fetch(`${baseUrl}/api/workspace/sync`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -193,13 +203,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }, 300);
   }
 
-  // Cross-device sync: poll backend every 2.5s and on window focus
+  // Cross-device sync: poll backend every 2.5s and on window focus (if backend is configured)
   useEffect(() => {
     let isMounted = true;
+    const baseUrl = getApiBaseUrl();
+    if (!baseUrl) return;
 
     async function pollSync() {
       try {
-        const res = await fetch("http://localhost:5000/api/workspace/sync");
+        const res = await fetch(`${baseUrl}/api/workspace/sync`);
         if (!res.ok) return;
         const json = await res.json();
         if (!isMounted) return;
@@ -718,8 +730,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       },
       lastSyncedAt,
       async syncNow() {
+        const baseUrl = getApiBaseUrl();
+        if (!baseUrl) return;
         try {
-          const res = await fetch("http://localhost:5000/api/workspace/sync");
+          const res = await fetch(`${baseUrl}/api/workspace/sync`);
           if (!res.ok) return;
           const json = await res.json();
           if (json.data) {

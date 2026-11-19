@@ -59,10 +59,93 @@ type Content = { type: string; content?: Content[]; text?: string; [key: string]
 type Doc = DocItem;
 type Version = { id: string; title: string; content: string; createdAt: string };
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API = process.env.NEXT_PUBLIC_API_URL || "";
 const DOCS_CACHE_KEY = "klickup-docs-cache";
 const EMPTY: Content = { type: "doc", content: [{ type: "paragraph" }] };
 const TABLE_SIZE = { rows: 3, cols: 3, withHeaderRow: true } as const;
+
+function getDocsApiUrl(): string {
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "");
+  if (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
+    return "http://localhost:5000";
+  }
+  return "";
+}
+
+const DEFAULT_DOCS: Doc[] = [
+  {
+    id: "doc_onboarding_1",
+    title: "🚀 KlickUp Workspace Overview & Guide",
+    icon: "📄",
+    visibility: "workspace",
+    isPinned: true,
+    isFavorite: true,
+    updatedAt: new Date().toISOString(),
+    content: JSON.stringify({
+      isMultiPage: true,
+      activePageId: "p_1",
+      pages: [
+        {
+          id: "p_1",
+          title: "Overview",
+          icon: "📄",
+          content: {
+            type: "doc",
+            content: [
+              { type: "heading", attrs: { level: 1 }, content: [{ type: "text", text: "Welcome to KlickUp" }] },
+              { type: "paragraph", content: [{ type: "text", text: "KlickUp is an all-in-one productivity platform for fast-moving teams. Manage tasks, collaborate on docs, whiteboard workflows, and track team progress seamlessly." }] },
+              { type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "Active Spaces" }] },
+              { type: "bulletList", content: [
+                { type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Performance: Ads, Meta Campaigns, and Analytics" }] }] },
+                { type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Creative: Graphic design, video shoots, copywriting" }] }] },
+                { type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "ERP/Web: Systems, integrations, inventory synchronization" }] }] },
+              ] },
+              { type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "Quick Start Checklist" }] },
+              { type: "taskList", content: [
+                { type: "taskItem", attrs: { checked: true }, content: [{ type: "paragraph", content: [{ type: "text", text: "Explore the List & Kanban views" }] }] },
+                { type: "taskItem", attrs: { checked: true }, content: [{ type: "paragraph", content: [{ type: "text", text: "Check the visual Whiteboard canvas" }] }] },
+                { type: "taskItem", attrs: { checked: false }, content: [{ type: "paragraph", content: [{ type: "text", text: "Create your first document or task" }] }] },
+              ] },
+            ]
+          }
+        }
+      ]
+    })
+  },
+  {
+    id: "doc_sprint_2",
+    title: "📋 Q4 Sprint Plan & Deliverables",
+    icon: "🎯",
+    visibility: "workspace",
+    isPinned: false,
+    isFavorite: false,
+    updatedAt: new Date(Date.now() - 86400000).toISOString(),
+    content: JSON.stringify({
+      isMultiPage: true,
+      activePageId: "p_s1",
+      pages: [
+        {
+          id: "p_s1",
+          title: "Sprint Goals",
+          icon: "🎯",
+          content: {
+            type: "doc",
+            content: [
+              { type: "heading", attrs: { level: 1 }, content: [{ type: "text", text: "Q4 Sprint Plan" }] },
+              { type: "paragraph", content: [{ type: "text", text: "Objective: Ship feature milestones, improve conversion funnels, and streamline team workflows." }] },
+              { type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "Deliverables" }] },
+              { type: "taskList", content: [
+                { type: "taskItem", attrs: { checked: true }, content: [{ type: "paragraph", content: [{ type: "text", text: "Automated email sequences setup" }] }] },
+                { type: "taskItem", attrs: { checked: false }, content: [{ type: "paragraph", content: [{ type: "text", text: "Lead management pipeline review" }] }] },
+                { type: "taskItem", attrs: { checked: false }, content: [{ type: "paragraph", content: [{ type: "text", text: "Dashboard metrics aggregation" }] }] },
+              ] }
+            ]
+          }
+        }
+      ]
+    })
+  }
+];
 
 function cacheDocs(list: Doc[]) {
   try {
@@ -75,11 +158,16 @@ function cacheDocs(list: Doc[]) {
 function readCachedDocs(): Doc[] {
   try {
     const raw = localStorage.getItem(DOCS_CACHE_KEY);
-    if (!raw) return [];
+    if (!raw) {
+      cacheDocs(DEFAULT_DOCS);
+      return DEFAULT_DOCS;
+    }
     const list = JSON.parse(raw);
-    return Array.isArray(list) ? list : [];
+    if (Array.isArray(list) && list.length > 0) return list;
+    cacheDocs(DEFAULT_DOCS);
+    return DEFAULT_DOCS;
   } catch {
-    return [];
+    return DEFAULT_DOCS;
   }
 }
 
@@ -422,7 +510,9 @@ export default function DocsPage() {
   const activePage = pages.find((p) => p.id === activePageId) || pages[0];
 
   const request = useCallback(async (path: string, options?: RequestInit) => {
-    const r = await fetch(`${API}/api/documents${path}`, {
+    const api = getDocsApiUrl();
+    if (!api) throw new Error("Standalone demo mode");
+    const r = await fetch(`${api}/api/documents${path}`, {
       ...options,
       headers: { "Content-Type": "application/json", ...options?.headers },
     });
@@ -922,8 +1012,11 @@ export default function DocsPage() {
         cacheDocs(list);
         setStatus("saved");
       } catch {
-        if (!cached.length) setStatus("error");
-        else setStatus("saved");
+        if (!cached.length) {
+          setDocs(DEFAULT_DOCS);
+          cacheDocs(DEFAULT_DOCS);
+        }
+        setStatus("saved");
       }
     })();
 
